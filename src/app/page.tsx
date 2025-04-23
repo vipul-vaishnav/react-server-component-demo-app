@@ -147,12 +147,12 @@ async function UserTable({ searchParams }: { searchParams: { [key: string]: stri
   )
 }
 
-export default async function Home({
-  searchParams
-}: {
-  searchParams: { [key: string]: string | string[] | undefined }
-}) {
-  const searchQuery = typeof searchParams.search === 'string' ? searchParams.search : undefined
+type Props = {
+  searchParams?: { [key: string]: string | string[] | undefined }
+}
+
+export default async function Home({ searchParams }: Props) {
+  const searchQuery = typeof searchParams?.search === 'string' ? searchParams.search : undefined
 
   return (
     <main className="min-h-screen h-full max-w-screen w-full bg-neutral-900 text-white">
@@ -165,7 +165,7 @@ export default async function Home({
             </div>
           }
         >
-          <UserTable searchParams={searchParams} />
+          <UserTable searchParams={searchParams!} />
         </Suspense>
       </div>
     </main>
