@@ -1,16 +1,29 @@
 'use client'
 import { useRouter } from 'next/navigation'
-import React, { ChangeEvent } from 'react'
+import React, { useEffect, useState, useTransition } from 'react'
 
 type UserSearchProps = {
   searchVal: string
-  currentSearchParams: URLSearchParams
 }
 
-const UserSearch: React.FC<UserSearchProps> = ({ searchVal, currentSearchParams }) => {
+const UserSearch: React.FC<UserSearchProps> = ({ searchVal }) => {
   const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  const [search, setSearch] = useState(searchVal)
 
-  const newSearchParams = new URLSearchParams(currentSearchParams)
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      startTransition(() => {
+        if (search.trim().length > 0) {
+          router.push(`/?search=${encodeURIComponent(search)}`)
+        } else {
+          router.push('/')
+        }
+      })
+    }, 500) // ⏱️ 500ms debounce delay
+
+    return () => clearTimeout(delayDebounce) // 🧹 cleanup old timers
+  }, [search, router])
 
   return (
     <div className="flex items-center justify-between mb-12">
@@ -25,25 +38,26 @@ const UserSearch: React.FC<UserSearchProps> = ({ searchVal, currentSearchParams 
             />
           </svg>
         </div>
+        {isPending && (
+          <div className="absolute top-[12px] right-[12px]">
+            <div className="flex items-center justify-center h-auto">
+              <div className="w-5 h-5 border-3 border-neutral-600 border-t-neutral-800 rounded-full animate-spin"></div>
+            </div>
+          </div>
+        )}
         <input
           type="text"
           className="max-w-md w-full bg-transparent border pl-8 border-neutral-800 p-2 rounded-xl focus:outline-none focus:border-neutral-700"
           placeholder="Search Name..."
           autoComplete="off"
           name="Search"
-          defaultValue={searchVal}
+          value={search}
           id="Search"
-          onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            if (e.target.value) {
-              newSearchParams.set('search', e.target.value)
-            } else {
-              newSearchParams.delete('search')
-            }
-            router.push(`/?${newSearchParams.toString()}`)
-          }}
+          onChange={(e) => setSearch(e.target.value)}
         />
       </div>
     </div>
   )
 }
+
 export default UserSearch

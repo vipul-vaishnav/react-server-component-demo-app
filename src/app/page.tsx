@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma.client'
 import UserSearch from '@/UserSearch'
 import { SearchParams } from 'next/dist/server/request/search-params'
 import Link from 'next/link'
+import { Suspense } from 'react'
 
 function PrevPage({ page, currentSearchParams }: { page: number; currentSearchParams: URLSearchParams }) {
   const newSearchParams = new URLSearchParams(currentSearchParams)
@@ -67,7 +68,7 @@ function NextPage({
   )
 }
 
-export default async function Home({ searchParams }: { searchParams: SearchParams }) {
+async function UserTable({ searchParams }: { searchParams: SearchParams }) {
   const perPage = 7 // totalPages = 1000 / 7 = 142.88  ~= 143 pages
   const searchQuery = typeof searchParams.search === 'string' ? searchParams.search : undefined
 
@@ -110,41 +111,59 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
   }
 
   return (
-    <main className="min-h-screen max-w-screen w-full bg-neutral-900 text-white">
+    <>
+      <div className="grid grid-cols-[200px_1fr_1fr_400px] bg-neutral-800 mb-4 p-4 font-bold rounded-2xl">
+        <p>S.No.</p>
+        <p>Name</p>
+        <p>Email</p>
+        <p> &nbsp; </p>
+      </div>
+      <div className="space-y-2">
+        {users.map((user) => {
+          return (
+            <div
+              className="grid grid-cols-[200px_1fr_1fr_400px] p-3 px-4 font-bold rounded-2xl border border-transparent hover:border-neutral-700 transition-all duration-300"
+              key={user.id}
+            >
+              <p>{user.serialNumber}</p>
+              <p>{user.name}</p>
+              <p>{user.email}</p>
+              <button>✏️ Edit</button>
+            </div>
+          )
+        })}
+      </div>
+      <div className="flex items-center justify-between mt-8">
+        <p>
+          Showing <span className="font-bold">{(page - 1) * perPage + 1}</span> to{' '}
+          <span className="font-bold">{Math.min(page * perPage, totalUsers)}</span> users of{' '}
+          <span className="font-bold">{totalUsers}</span>
+        </p>
+        <div className="space-x-2">
+          <PrevPage page={page} currentSearchParams={currentSearchParams} />
+          <NextPage lastPage={lastPage} page={page} currentSearchParams={currentSearchParams} />
+        </div>
+      </div>
+    </>
+  )
+}
+
+export default async function Home({ searchParams }: { searchParams: SearchParams }) {
+  const searchQuery = typeof searchParams.search === 'string' ? searchParams.search : undefined
+
+  return (
+    <main className="min-h-screen h-full max-w-screen w-full bg-neutral-900 text-white">
       <div className="max-w-7xl mx-auto py-6">
-        <UserSearch searchVal={searchQuery ?? ''} currentSearchParams={currentSearchParams} />
-        <div className="grid grid-cols-[200px_1fr_1fr_400px] bg-neutral-800 mb-4 p-4 font-bold rounded-2xl">
-          <p>S.No.</p>
-          <p>Name</p>
-          <p>Email</p>
-          <p> &nbsp; </p>
-        </div>
-        <div className="space-y-2">
-          {users.map((user) => {
-            return (
-              <div
-                className="grid grid-cols-[200px_1fr_1fr_400px] p-3 px-4 font-bold rounded-2xl border border-transparent hover:border-neutral-700 transition-all duration-300"
-                key={user.id}
-              >
-                <p>{user.serialNumber}</p>
-                <p>{user.name}</p>
-                <p>{user.email}</p>
-                <button>✏️ Edit</button>
-              </div>
-            )
-          })}
-        </div>
-        <div className="flex items-center justify-between mt-8">
-          <p>
-            Showing <span className="font-bold">{(page - 1) * perPage + 1}</span> to{' '}
-            <span className="font-bold">{Math.min(page * perPage, totalUsers)}</span> users of{' '}
-            <span className="font-bold">{totalUsers}</span>
-          </p>
-          <div className="space-x-2">
-            <PrevPage page={page} currentSearchParams={currentSearchParams} />
-            <NextPage lastPage={lastPage} page={page} currentSearchParams={currentSearchParams} />
-          </div>
-        </div>
+        <UserSearch searchVal={searchQuery ?? ''} />
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center h-screen">
+              <div className="w-12 h-12 border-4 border-neutral-600 border-t-neutral-800 rounded-full animate-spin"></div>
+            </div>
+          }
+        >
+          <UserTable searchParams={searchParams} />
+        </Suspense>
       </div>
     </main>
   )
