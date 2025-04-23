@@ -151,7 +151,7 @@ type Props = {
   searchParams?: { [key: string]: string | string[] | undefined }
 }
 
-export default async function Home({ searchParams }: Props) {
+export default function Home({ searchParams }: Props) {
   const searchQuery = typeof searchParams?.search === 'string' ? searchParams.search : undefined
 
   return (
