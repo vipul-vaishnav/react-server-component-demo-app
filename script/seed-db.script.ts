@@ -7,7 +7,11 @@ const seedDbWithUsers = async () => {
       'https://fakerapi.it/api/v2/persons/?_quantity=1002'
     )
     const data = res.data.data
-    const payload = data.map((person) => ({ name: person.firstname + ' ' + person.lastname, email: person.email }))
+    const payload = data.map((person, idx) => ({
+      name: person.firstname + ' ' + person.lastname,
+      email: person.email,
+      serialNumber: idx + 1
+    }))
 
     if (payload && payload.length > 0) {
       await prisma.user.createMany({
