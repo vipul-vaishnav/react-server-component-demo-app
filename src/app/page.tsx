@@ -3,8 +3,6 @@ import UserSearch from '@/UserSearch'
 import Link from 'next/link'
 import { Suspense } from 'react'
 
-type SearchParamsType = { [key: string]: string | string[] | undefined }
-
 function PrevPage({ page, currentSearchParams }: { page: number; currentSearchParams: URLSearchParams }) {
   const newSearchParams = new URLSearchParams(currentSearchParams)
 
@@ -69,7 +67,7 @@ function NextPage({
   )
 }
 
-async function UserTable({ searchParams }: { searchParams: SearchParamsType }) {
+async function UserTable({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
   const perPage = 7 // totalPages = 1000 / 7 = 142.88  ~= 143 pages
   const searchQuery = typeof searchParams.search === 'string' ? searchParams.search : undefined
 
@@ -149,7 +147,11 @@ async function UserTable({ searchParams }: { searchParams: SearchParamsType }) {
   )
 }
 
-export default async function Home({ searchParams }: { searchParams: SearchParamsType }) {
+export default async function Home({
+  searchParams
+}: {
+  searchParams: { [key: string]: string | string[] | undefined }
+}) {
   const searchQuery = typeof searchParams.search === 'string' ? searchParams.search : undefined
 
   return (
