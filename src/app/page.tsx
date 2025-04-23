@@ -1,8 +1,9 @@
 import prisma from '@/lib/prisma.client'
 import UserSearch from '@/UserSearch'
-import { SearchParams } from 'next/dist/server/request/search-params'
 import Link from 'next/link'
 import { Suspense } from 'react'
+
+type SearchParamsType = { [key: string]: string | string[] | undefined }
 
 function PrevPage({ page, currentSearchParams }: { page: number; currentSearchParams: URLSearchParams }) {
   const newSearchParams = new URLSearchParams(currentSearchParams)
@@ -68,7 +69,7 @@ function NextPage({
   )
 }
 
-async function UserTable({ searchParams }: { searchParams: SearchParams }) {
+async function UserTable({ searchParams }: { searchParams: SearchParamsType }) {
   const perPage = 7 // totalPages = 1000 / 7 = 142.88  ~= 143 pages
   const searchQuery = typeof searchParams.search === 'string' ? searchParams.search : undefined
 
@@ -148,7 +149,7 @@ async function UserTable({ searchParams }: { searchParams: SearchParams }) {
   )
 }
 
-export default async function Home({ searchParams }: { searchParams: SearchParams }) {
+export default async function Home({ searchParams }: { searchParams: SearchParamsType }) {
   const searchQuery = typeof searchParams.search === 'string' ? searchParams.search : undefined
 
   return (
