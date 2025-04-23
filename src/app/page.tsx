@@ -3,10 +3,18 @@ import UserSearch from '@/UserSearch'
 import { SearchParams } from 'next/dist/server/request/search-params'
 import Link from 'next/link'
 
-function PrevPage({ page }: { page: number }) {
+function PrevPage({ page, currentSearchParams }: { page: number; currentSearchParams: URLSearchParams }) {
+  const newSearchParams = new URLSearchParams(currentSearchParams)
+
+  if (page > 2) {
+    newSearchParams.set('page', `${page - 1}`)
+  } else {
+    newSearchParams.delete('page')
+  }
+
   return (
     <>
-      {page === 1 ? (
+      {page <= 1 ? (
         <button
           disabled
           className="pointer-events-none bg-neutral-600 text-neutral-950 px-6 py-2 rounded cursor-not-allowed"
@@ -15,7 +23,7 @@ function PrevPage({ page }: { page: number }) {
         </button>
       ) : (
         <Link
-          href={page === 2 ? '/' : `/?page=${page - 1}`}
+          href={`/?${newSearchParams.toString()}`}
           className="px-6 py-2 rounded bg-transparent border border-neutral-800"
         >
           Prev
@@ -25,10 +33,22 @@ function PrevPage({ page }: { page: number }) {
   )
 }
 
-function NextPage({ lastPage, page }: { lastPage: number; page: number }) {
+function NextPage({
+  lastPage,
+  page,
+  currentSearchParams
+}: {
+  lastPage: number
+  page: number
+  currentSearchParams: URLSearchParams
+}) {
+  const newSearchParams = new URLSearchParams(currentSearchParams)
+
+  newSearchParams.set('page', `${page + 1}`)
+
   return (
     <>
-      {page === lastPage ? (
+      {page >= lastPage ? (
         <button
           disabled
           className="pointer-events-none bg-neutral-600 text-neutral-950 px-6 py-2 rounded cursor-not-allowed"
@@ -36,7 +56,10 @@ function NextPage({ lastPage, page }: { lastPage: number; page: number }) {
           Next
         </button>
       ) : (
-        <Link href={`/?page=${page + 1}`} className="px-6 py-2 rounded bg-transparent border border-neutral-800">
+        <Link
+          href={`/?${newSearchParams.toString()}`}
+          className="px-6 py-2 rounded bg-transparent border border-neutral-800"
+        >
           Next
         </Link>
       )}
@@ -46,9 +69,18 @@ function NextPage({ lastPage, page }: { lastPage: number; page: number }) {
 
 export default async function Home({ searchParams }: { searchParams: SearchParams }) {
   const perPage = 7 // totalPages = 1000 / 7 = 142.88  ~= 143 pages
-  const totalUsers = await prisma.user.count()
-  const lastPage = Math.ceil(totalUsers / perPage)
+  const searchQuery = typeof searchParams.search === 'string' ? searchParams.search : undefined
 
+  const totalUsers = await prisma.user.count({
+    where: {
+      name: {
+        contains: searchQuery,
+        mode: 'insensitive'
+      }
+    }
+  })
+
+  const lastPage = Math.ceil(totalUsers / perPage)
   const page =
     typeof searchParams.page === 'string'
       ? +searchParams.page > lastPage
@@ -60,13 +92,27 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
 
   const users = await prisma.user.findMany({
     take: perPage,
-    skip: (page - 1) * perPage
+    skip: (page - 1) * perPage,
+    where: {
+      name: {
+        contains: searchQuery,
+        mode: 'insensitive'
+      }
+    }
   })
+
+  const currentSearchParams = new URLSearchParams()
+  if (searchQuery) {
+    currentSearchParams.set('search', searchQuery)
+  }
+  if (page > 1) {
+    currentSearchParams.set('page', `${page}`)
+  }
 
   return (
     <main className="min-h-screen max-w-screen w-full bg-neutral-900 text-white">
       <div className="max-w-7xl mx-auto py-6">
-        <UserSearch />
+        <UserSearch searchVal={searchQuery ?? ''} currentSearchParams={currentSearchParams} />
         <div className="grid grid-cols-[200px_1fr_1fr_400px] bg-neutral-800 mb-4 p-4 font-bold rounded-2xl">
           <p>S.No.</p>
           <p>Name</p>
@@ -88,15 +134,15 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
             )
           })}
         </div>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mt-8">
           <p>
             Showing <span className="font-bold">{(page - 1) * perPage + 1}</span> to{' '}
             <span className="font-bold">{Math.min(page * perPage, totalUsers)}</span> users of{' '}
             <span className="font-bold">{totalUsers}</span>
           </p>
-          <div className="space-x-2 mt-8">
-            <PrevPage page={page} />
-            <NextPage lastPage={lastPage} page={page} />
+          <div className="space-x-2">
+            <PrevPage page={page} currentSearchParams={currentSearchParams} />
+            <NextPage lastPage={lastPage} page={page} currentSearchParams={currentSearchParams} />
           </div>
         </div>
       </div>

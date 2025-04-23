@@ -1,9 +1,17 @@
 'use client'
-import React from 'react'
+import { useRouter } from 'next/navigation'
+import React, { ChangeEvent } from 'react'
 
-type UserSearchProps = {}
+type UserSearchProps = {
+  searchVal: string
+  currentSearchParams: URLSearchParams
+}
 
-const UserSearch: React.FC<UserSearchProps> = () => {
+const UserSearch: React.FC<UserSearchProps> = ({ searchVal, currentSearchParams }) => {
+  const router = useRouter()
+
+  const newSearchParams = new URLSearchParams(currentSearchParams)
+
   return (
     <div className="flex items-center justify-between mb-12">
       <div className="text-2xl w-full font-bold">🔥 React Server Component</div>
@@ -20,9 +28,19 @@ const UserSearch: React.FC<UserSearchProps> = () => {
         <input
           type="text"
           className="max-w-md w-full bg-transparent border pl-8 border-neutral-800 p-2 rounded-xl focus:outline-none focus:border-neutral-700"
-          placeholder="Search..."
+          placeholder="Search Name..."
           autoComplete="off"
           name="Search"
+          defaultValue={searchVal}
+          id="Search"
+          onChange={(e: ChangeEvent<HTMLInputElement>) => {
+            if (e.target.value) {
+              newSearchParams.set('search', e.target.value)
+            } else {
+              newSearchParams.delete('search')
+            }
+            router.push(`/?${newSearchParams.toString()}`)
+          }}
         />
       </div>
     </div>
